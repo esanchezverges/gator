@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 )
 
@@ -26,11 +27,11 @@ func Read() (Config, error) {
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("Error reading file in Read: %v", err)
 	}
 	var config Config
 	if err := json.Unmarshal(data, &config); err != nil {
-		return Config{}, err
+		return Config{}, fmt.Errorf("Error unmarshaling data in Read: %v", err)
 	}
 	return config, nil
 }
@@ -42,10 +43,10 @@ func write(cfg Config) error {
 	}
 	data, err := json.MarshalIndent(cfg, "", "    ")
 	if err != nil {
-		return err
+		return fmt.Errorf("Error marshalingindent in write: %v", err)
 	}
 	if err := os.WriteFile(path, data, os.ModeDevice); err != nil {
-		return err
+		return fmt.Errorf("Error writing data in write: %v", err)
 	}
 	return nil
 }
@@ -53,9 +54,9 @@ func write(cfg Config) error {
 func getConfigFilePath() (string, error) {
 	path, err := os.UserHomeDir()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error in getConfigFilePath: %v", err)
 	}
-	path += gatorConfigFileName
+	path += "/" + gatorConfigFileName
 	return path, nil
 }
 
