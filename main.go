@@ -1,9 +1,15 @@
 package main
 
 import (
+	"context"
+	"database/sql"
 	"fmt"
 	cfg "github.com/esanchezverges/gator/internal/config"
+	"github.com/esanchezverges/gator/internal/database"
+	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 	"os"
+	"time"
 )
 
 var st state
@@ -15,15 +21,24 @@ func main() {
 		os.Exit(1)
 		return
 	}
+	if err := setDb(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+		return
+	}
+
 	cmds.register("login", handlerLogin)
+	cmds.register("register", handlerRegister)
 	args := os.Args
+
 	if len(args) < 2 {
 		fmt.Println("Too few arguments")
 		os.Exit(1)
 		return
 	}
+
 	if err := cmds.run(&st, command{name: args[1], args: args[2:]}); err != nil {
-		fmt.Printf("Error running command %v: %v", args[1], err)
+		fmt.Printf("Error running command %v:\n %v\n", args[1], err)
 		os.Exit(1)
 		return
 	}
@@ -38,6 +53,15 @@ func setConfig() error {
 	return nil
 }
 
+func setDb() error {
+	db, err := sql.Open("postgres", st.config.Dburl)
+	if err != nil {
+		return fmt.Errorf("There was an error opening the db connection: %v", err)
+	}
+	st.db = database.New(db)
+	return nil
+}
+
 func handlerLogin(s *state, cmd command) error {
 	if s == nil {
 		return fmt.Errorf("Nil reference on state")
@@ -45,10 +69,40 @@ func handlerLogin(s *state, cmd command) error {
 	if len(cmd.args) != 1 {
 		return fmt.Errorf("Unknown arguments")
 	}
-	if err := s.config.SetUser(cmd.args[0]); err != nil {
+
+	username := cmd.args[0]
+	user, err := s.db.GetUser(context.Background(), username)
+
+	if err != nil {
 		return err
 	}
+	if err := s.config.SetUser(user.Name); err != nil {
+		return err
+	}
+
 	fmt.Printf("The user %v has been logged in succesfully\n", cmd.args[0])
+	return nil
+}
+
+func handlerRegister(s *state, cmd command) error {
+	if s == nil {
+		return fmt.Errorf("Nil reference on state")
+	}
+	if len(cmd.args) != 1 {
+		return fmt.Errorf("Unknown arguments")
+	}
+	userParams := database.CreateuserParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      cmd.args[0],
+	}
+	newUser, err := s.db.Createuser(context.Background(), userParams)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Created user: ", newUser.Name)
+	s.config.SetUser(newUser.Name)
 	return nil
 }
 
@@ -71,5 +125,6 @@ type command struct {
 }
 
 type state struct {
+	db     *database.Queries
 	config *cfg.Config
 }
