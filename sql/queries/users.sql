@@ -1,4 +1,4 @@
--- name: Createuser :one
+-- name: CreateUser :one
 INSERT INTO users (id, created_at, updated_at, name)
 VALUES(
 	$1,
@@ -11,3 +11,5 @@ RETURNING *;
 SELECT *
 FROM users 
 WHERE name = $1;
+-- name: DeleteAll :exec
+DELETE FROM users;

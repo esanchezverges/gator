@@ -7,11 +7,12 @@ package database
 
 import (
 	"context"
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
-const createuser = `-- name: Createuser :one
+const createUser = `-- name: CreateUser :one
 INSERT INTO users (id, created_at, updated_at, name)
 VALUES(
 	$1,
@@ -22,15 +23,15 @@ VALUES(
 RETURNING id, created_at, updated_at, name
 `
 
-type CreateuserParams struct {
+type CreateUserParams struct {
 	ID        uuid.UUID
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	Name      string
 }
 
-func (q *Queries) Createuser(ctx context.Context, arg CreateuserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createuser,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
 		arg.ID,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -44,6 +45,15 @@ func (q *Queries) Createuser(ctx context.Context, arg CreateuserParams) (User, e
 		&i.Name,
 	)
 	return i, err
+}
+
+const deleteAll = `-- name: DeleteAll :exec
+DELETE FROM users
+`
+
+func (q *Queries) DeleteAll(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteAll)
+	return err
 }
 
 const getUser = `-- name: GetUser :one
