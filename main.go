@@ -29,6 +29,9 @@ func main() {
 
 	cmds.register("login", handlerLogin)
 	cmds.register("register", handlerRegister)
+	cmds.register("users", handlerUsers)
+	cmds.register("reset", handlerReset)
+
 	args := os.Args
 
 	if len(args) < 2 {
@@ -103,6 +106,43 @@ func handlerRegister(s *state, cmd command) error {
 	}
 	fmt.Println("Created user: ", newUser.Name)
 	s.config.SetUser(newUser.Name)
+	return nil
+}
+
+func handlerReset(s *state, cmd command) error {
+	if s == nil {
+		return fmt.Errorf("Nil reference on state")
+	}
+	if len(cmd.args) > 0 {
+		return fmt.Errorf("Unknown arguments: %v\n", cmd.args)
+	}
+	err := s.db.DeleteAll(context.Background())
+	if err != nil {
+		return err
+	}
+	fmt.Println("Deleted all users from the database")
+	return nil
+}
+
+func handlerUsers(s *state, cmd command) error {
+	if s == nil {
+		return fmt.Errorf("Nil reference on state")
+	}
+	if len(cmd.args) > 0 {
+		return fmt.Errorf("Unknown arguments: %v\n", cmd.args)
+	}
+	usrs, err := s.db.GetUsers(context.Background())
+	if err != nil {
+		return err
+	}
+
+	for _, u := range usrs {
+		if u.Name == s.config.Currentusername {
+			fmt.Println("*", u.Name, "(current)")
+		} else {
+			fmt.Println("*", u.Name)
+		}
+	}
 	return nil
 }
 
