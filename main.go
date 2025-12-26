@@ -145,7 +145,7 @@ func handlerAggregate(s *state, cmd command) error {
 	fmt.Println("Found at:", "https://www.wagslane.dev/index.xml")
 	bytes, err := xml.MarshalIndent(*rssFeed, "", "    ")
 	if err != nil {
-		return fmt.Errorf("Error marshalling the rssfeed: %v\n", err)
+		return fmt.Errorf("Error marshalling the RSSFeed: %v\n", err)
 	}
 	fmt.Println(html.UnescapeString(string(bytes)))
 	return nil
