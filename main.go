@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/xml"
 	"fmt"
+	api "github.com/esanchezverges/gator/internal/api"
 	cfg "github.com/esanchezverges/gator/internal/config"
 	"github.com/esanchezverges/gator/internal/database"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	"html"
 	"os"
 	"time"
 )
@@ -31,6 +34,7 @@ func main() {
 	cmds.register("register", handlerRegister)
 	cmds.register("users", handlerUsers)
 	cmds.register("reset", handlerReset)
+	cmds.register("agg", handlerAggregate)
 
 	args := os.Args
 
@@ -121,6 +125,29 @@ func handlerReset(s *state, cmd command) error {
 		return err
 	}
 	fmt.Println("Deleted all users from the database")
+	return nil
+}
+
+func handlerAggregate(s *state, cmd command) error {
+	if s == nil {
+		return fmt.Errorf("Nil reference on state\n")
+	}
+	//if len(cmd.args) != 1 {
+	//return fmt.Errorf("Unknown arguments: %v\n", cmd.args)
+	//}
+	rssFeed, err := api.FetchFeed(context.Background(), "https://www.wagslane.dev/index.xml")
+	if err != nil {
+		return err
+	}
+	if rssFeed == nil {
+		return fmt.Errorf("Nil reference on rssFeed\n")
+	}
+	fmt.Println("Found at:", "https://www.wagslane.dev/index.xml")
+	bytes, err := xml.MarshalIndent(*rssFeed, "", "    ")
+	if err != nil {
+		return fmt.Errorf("Error marshalling the rssfeed: %v\n", err)
+	}
+	fmt.Println(html.UnescapeString(string(bytes)))
 	return nil
 }
 

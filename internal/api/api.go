@@ -29,11 +29,10 @@ func FetchFeed(ctx context.Context, feedUrl string) (*RSSFeed, error) {
 	if err := xml.Unmarshal(data, &feed); err != nil {
 		return nil, err
 	}
-	feed.unescapeRSSFeed()
 	return &feed, nil
 }
 
-func (f *RSSFeed) unescapeRSSFeed() {
+func (f *RSSFeed) UnescapeRSSFeed() {
 	f.Channel.Title = html.UnescapeString(f.Channel.Title)
 	f.Channel.Link = html.UnescapeString(f.Channel.Link)
 	f.Channel.Description = html.UnescapeString(f.Channel.Description)
