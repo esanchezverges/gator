@@ -9,3 +9,5 @@ VALUES (
 	$6
 	)
 RETURNING *;
+-- name: DeleteFeeds :exec
+DELETE FROM feeds WHERE true = true;

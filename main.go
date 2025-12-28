@@ -35,6 +35,7 @@ func main() {
 	cmds.register("users", handlerUsers)
 	cmds.register("reset", handlerReset)
 	cmds.register("agg", handlerAggregate)
+	cmds.register("addfeed", handlerAddFeed)
 
 	args := os.Args
 
@@ -120,8 +121,10 @@ func handlerReset(s *state, cmd command) error {
 	if len(cmd.args) > 0 {
 		return fmt.Errorf("Unknown arguments: %v\n", cmd.args)
 	}
-	err := s.db.DeleteAll(context.Background())
-	if err != nil {
+	if err := s.db.DeleteAll(context.Background()); err != nil {
+		return err
+	}
+	if err := s.db.DeleteFeeds(context.Background()); err != nil {
 		return err
 	}
 	fmt.Println("Deleted all users from the database")
@@ -170,6 +173,35 @@ func handlerUsers(s *state, cmd command) error {
 			fmt.Println("*", u.Name)
 		}
 	}
+	return nil
+}
+
+func handlerAddFeed(s *state, cmd command) error {
+	if s == nil {
+		return fmt.Errorf("Nil reference on state")
+	}
+	if len(cmd.args) < 2 {
+		return fmt.Errorf("Not enough arguments")
+	}
+	user, err := s.db.GetUser(context.Background(), s.config.Currentusername)
+	if err != nil {
+		return err
+	}
+	feedName := cmd.args[0]
+	feedURL := cmd.args[1]
+	createFeedParams := database.CreateFeedParams{
+		ID:        uuid.New(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Name:      feedName,
+		Url:       feedURL,
+		UserID:    user.ID,
+	}
+	feed, err := s.db.CreateFeed(context.Background(), createFeedParams)
+	if err != nil {
+		return err
+	}
+	fmt.Println(feed)
 	return nil
 }
 

@@ -54,3 +54,12 @@ func (q *Queries) CreateFeed(ctx context.Context, arg CreateFeedParams) (Feed, e
 	)
 	return i, err
 }
+
+const deleteFeeds = `-- name: DeleteFeeds :exec
+DELETE FROM feeds WHERE true = true
+`
+
+func (q *Queries) DeleteFeeds(ctx context.Context) error {
+	_, err := q.db.ExecContext(ctx, deleteFeeds)
+	return err
+}
